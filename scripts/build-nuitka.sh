@@ -16,4 +16,5 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 python -m nuitka \
     --onefile \
     --output-filename=opkssh-wrapper \
+    --include-data-dir="${PROJECT_ROOT}/locale=locale" \
     "${PROJECT_ROOT}/src/opkssh_wrapper/main.py"
