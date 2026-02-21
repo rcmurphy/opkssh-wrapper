@@ -13,6 +13,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -98,7 +99,9 @@ def load_config(path: Path | None = None) -> Config:
 
     try:
         with open(config_path, "rb") as fh:
-            data = tomllib.loads(fh.read().decode("utf-8"))
+            data: dict[str, Any] = tomllib.loads(  # pyright: ignore[reportUnknownMemberType]
+                fh.read().decode("utf-8"),
+            )
     except Exception as exc:
         msg = _("Failed to parse config file {path}: {error}").format(
             path=config_path,
@@ -106,17 +109,19 @@ def load_config(path: Path | None = None) -> Config:
         )
         raise ConfigError(msg) from exc
 
-    key_path_raw = data.get("key_path")
+    key_path_raw: str | None = data.get("key_path")
     key_path = Path(key_path_raw) if key_path_raw else _DEFAULT_KEY_PATH
 
     # Validate key_path is within allowed directories.
     _validate_key_path(key_path)
 
+    ssh_path_val: str | None = data.get("ssh_path")
+
     return Config(
         key_ttl_hours=int(data.get("key_ttl_hours", 24)),
         key_wait_timeout=int(data.get("key_wait_timeout", 10)),
         login_timeout=int(data.get("login_timeout", 120)),
-        ssh_path=data.get("ssh_path"),
+        ssh_path=ssh_path_val,
         opkssh_path=str(data.get("opkssh_path", "opkssh")),
         key_path=key_path,
         aggressive_login=bool(data.get("aggressive_login", False)),
