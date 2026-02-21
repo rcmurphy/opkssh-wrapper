@@ -69,6 +69,7 @@ select = [
 python_version = "3.10"
 strict = true
 warn_unused_configs = true
+mypy_path = "typings"
 
 [tool.pyright]
 pythonVersion = "3.10"
