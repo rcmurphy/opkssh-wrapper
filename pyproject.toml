@@ -102,9 +102,6 @@ mypy_path = "typings"
 pythonVersion = "3.10"
 typeCheckingMode = "strict"
 
-[tool.hatch.build.hooks.custom]
-path = "hatch_build.py"
-
 [tool.bandit]
 skips = ["B603", "B404", "B606"]
 
