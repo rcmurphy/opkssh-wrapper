@@ -47,7 +47,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package with test dependencies
-        run: pip install -e ".[test]"
+        run: pip install -e ".[test]" babel
+
+      - name: Compile gettext catalogues
+        run: pybabel compile -d src/opkssh_wrapper/locale -D opkssh_wrapper
 
       - name: Run tests with coverage
         run: |
@@ -103,7 +106,10 @@ jobs:
           python-version: "3.12"
 
       - name: Install package with Nuitka dependencies
-        run: pip install ".[nuitka]"
+        run: pip install ".[nuitka]" babel
+
+      - name: Compile gettext catalogues
+        run: pybabel compile -d src/opkssh_wrapper/locale -D opkssh_wrapper
 
       - name: Install patchelf (Ubuntu only)
         if: runner.os == 'Linux'
