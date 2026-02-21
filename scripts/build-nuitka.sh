@@ -13,6 +13,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+LOCALE_SRC="${PROJECT_ROOT}/src/opkssh_wrapper/locale"
+
 python -m nuitka \
     --onefile \
     --output-filename=opkssh-wrapper \
