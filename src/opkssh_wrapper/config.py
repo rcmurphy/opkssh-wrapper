@@ -56,6 +56,17 @@ class ConfigError(Exception):
     """Raised when the configuration file cannot be parsed."""
 
 
+def _parse_toml(text: str) -> dict[str, Any]:
+    """Parse a TOML string and return the result as a typed dict.
+
+    This wrapper exists to provide a concrete return-type annotation
+    that both mypy and pyright trust, regardless of whether the stdlib
+    ``tomllib`` or the third-party ``tomli`` back-end is in use.
+    """
+    result: dict[str, Any] = tomllib.loads(text)  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+    return result
+
+
 def _validate_key_path(path: Path) -> Path:
     """Resolve *path* and verify it sits inside an allowed directory.
 
@@ -99,9 +110,7 @@ def load_config(path: Path | None = None) -> Config:
 
     try:
         with open(config_path, "rb") as fh:
-            data: dict[str, Any] = tomllib.loads(  # pyright: ignore[reportUnknownMemberType]
-                fh.read().decode("utf-8"),
-            )
+            data = _parse_toml(fh.read().decode("utf-8"))
     except Exception as exc:
         msg = _("Failed to parse config file {path}: {error}").format(
             path=config_path,
