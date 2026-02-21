@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dev dependencies
-        run: pip install ruff mypy bandit pyright
+      - name: Install package with lint dependencies
+        run: pip install -e ".[lint]"
 
       - name: Ruff lint
         run: ruff check src/ tests/
@@ -46,8 +46,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install package in editable mode with dev extras
-        run: pip install -e ".[dev]"
+      - name: Install package with test dependencies
+        run: pip install -e ".[test]"
 
       - name: Run tests with coverage
         run: |
@@ -75,7 +75,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install build twine
+        run: pip install ".[build]"
 
       - name: Build sdist and wheel
         run: python -m build
@@ -102,8 +102,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Nuitka and build dependencies
-        run: pip install nuitka ordered-set zstandard
+      - name: Install package with Nuitka dependencies
+        run: pip install ".[nuitka]"
 
       - name: Install patchelf (Ubuntu only)
         if: runner.os == 'Linux'
@@ -139,8 +139,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install audit tools
-        run: pip install pip-audit safety
+      - name: Install package with audit dependencies
+        run: pip install ".[audit]"
 
       - name: pip-audit
         run: pip-audit .
@@ -149,6 +149,4 @@ jobs:
         run: safety check || true
 
       - name: License check
-        run: |
-          pip install pip-licenses
-          pip-licenses --from=mixed --fail-on="GPL-3.0-or-later;AGPL-3.0-or-later"
+        run: pip-licenses --from=mixed --fail-on="GPL-3.0-or-later;AGPL-3.0-or-later"
