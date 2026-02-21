@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dev dependencies
+        run: pip install ruff mypy bandit pyright
+
+      - name: Ruff lint
+        run: ruff check src/ tests/
+
+      - name: Ruff format check
+        run: ruff format --check src/ tests/
+
+      - name: Mypy
+        run: mypy src/ --strict
+
+      - name: Pyright
+        run: pyright src/
+
+      - name: Bandit
+        run: bandit -r src/ -c pyproject.toml
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package in editable mode with dev extras
+        run: pip install -e ".[dev]"
+
+      - name: Run tests with coverage
+        run: |
+          python -m pytest tests/ -v --tb=short \
+            --cov=opkssh_wrapper --cov-report=xml:coverage.xml --cov-report=term-missing
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+          retention-days: 14
+
+      - name: Enforce minimum coverage (3.12 only)
+        if: matrix.python-version == '3.12'
+        run: python -m coverage report --fail-under=90
+
+  build-sdist-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Validate distributions
+        run: twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 14
+
+  build-nuitka:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Nuitka and build dependencies
+        run: pip install nuitka ordered-set zstandard
+
+      - name: Install patchelf (Ubuntu only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y patchelf
+
+      - name: Build binary
+        run: bash scripts/build-nuitka.sh
+
+      - name: Smoke-test the binary
+        run: |
+          ./opkssh-wrapper --help || true
+          file ./opkssh-wrapper
+
+      - name: Security scan (Ubuntu only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y checksec
+          checksec --file=./opkssh-wrapper
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuitka-binary-${{ runner.os == 'Linux' && 'linux' || 'macos' }}
+          path: ./opkssh-wrapper
+          retention-days: 14
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install audit tools
+        run: pip install pip-audit safety
+
+      - name: pip-audit
+        run: pip-audit .
+
+      - name: safety check
+        run: safety check || true
+
+      - name: License check
+        run: |
+          pip install pip-licenses
+          pip-licenses --from=mixed --fail-on="GPL-3.0-or-later;AGPL-3.0-or-later"

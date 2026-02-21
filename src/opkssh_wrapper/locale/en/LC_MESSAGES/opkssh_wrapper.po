@@ -1,0 +1,70 @@
+# English translations for opkssh-wrapper.
+# Copyright (C) 2025
+# This file is distributed under the same license as the opkssh-wrapper package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: opkssh-wrapper 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 00:00+0000\n"
+"PO-Revision-Date: 2025-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Usage: opkssh-wrapper [ssh arguments ...]"
+msgstr "Usage: opkssh-wrapper [ssh arguments ...]"
+
+msgid "A thin shim that ensures a valid opkssh identity exists before passing all arguments through to the real ssh binary."
+msgstr "A thin shim that ensures a valid opkssh identity exists before passing all arguments through to the real ssh binary."
+
+msgid "Options:"
+msgstr "Options:"
+
+msgid "  --help     Show this help message and exit"
+msgstr "  --help     Show this help message and exit"
+
+msgid "  --version  Show version and exit"
+msgstr "  --version  Show version and exit"
+
+msgid "Key expired. Authenticating..."
+msgstr "Key expired. Authenticating..."
+
+msgid "opkssh-wrapper: key expired, run 'opkssh-wrapper login' interactively"
+msgstr "opkssh-wrapper: key expired, run 'opkssh-wrapper login' interactively"
+
+msgid "opkssh-wrapper: opkssh login failed"
+msgstr "opkssh-wrapper: opkssh login failed"
+
+msgid "opkssh-wrapper: opkssh login timed out after {seconds}s"
+msgstr "opkssh-wrapper: opkssh login timed out after {seconds}s"
+
+msgid "opkssh-wrapper: opkssh binary not found at '{path}'"
+msgstr "opkssh-wrapper: opkssh binary not found at '{path}'"
+
+msgid "opkssh-wrapper: key file did not appear within {seconds}s after login"
+msgstr "opkssh-wrapper: key file did not appear within {seconds}s after login"
+
+msgid "opkssh-wrapper: key file {path} does not exist"
+msgstr "opkssh-wrapper: key file {path} does not exist"
+
+msgid "opkssh-wrapper: key file {path} has mode {mode:#o}, expected 0o600"
+msgstr "opkssh-wrapper: key file {path} has mode {mode:#o}, expected 0o600"
+
+msgid "opkssh-wrapper: configuration error: {error}"
+msgstr "opkssh-wrapper: configuration error: {error}"
+
+msgid "key_path {path} is outside allowed directories (~/.ssh/ or ~/.opk/)"
+msgstr "key_path {path} is outside allowed directories (~/.ssh/ or ~/.opk/)"
+
+msgid "Failed to parse config file {path}: {error}"
+msgstr "Failed to parse config file {path}: {error}"
+
+msgid "Configured ssh_path {path} is not an executable file"
+msgstr "Configured ssh_path {path} is not an executable file"
+
+msgid "Could not find a real ssh binary on PATH or at {fallback}"
+msgstr "Could not find a real ssh binary on PATH or at {fallback}"
