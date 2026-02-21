@@ -1,6 +1,6 @@
-# AGENTS.md — opkssh-py
+# AGENTS.md — opkssh-wrapper
 
-Guide for AI agents contributing to **opkssh-py**, a thin shell shim that
+Guide for AI agents contributing to **opkssh-wrapper**, a thin shell shim that
 transparently injects [opkssh](https://github.com/openpubkey/opkssh) into SSH
 workflows. The shim intercepts `ssh` invocations, ensures a valid opkssh
 identity exists, and passes all arguments through to the real `ssh` binary
@@ -10,7 +10,7 @@ unmodified.
 
 ## What This Project Is
 
-A passthrough wrapper. The user aliases or injects `opkssh-py` in place of
+A passthrough wrapper. The user aliases or injects `opkssh-wrapper` in place of
 `ssh`. The shim:
 
 1. Checks whether a valid (non-expired) opkssh ephemeral key exists.
