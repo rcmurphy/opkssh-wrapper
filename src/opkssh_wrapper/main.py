@@ -206,12 +206,13 @@ def main(argv: list[str] | None = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
 
-    # Special-case: --help / --version before anything else.
-    if "--help" in argv:
+    # Special-case: --help / --version only when they are the first argument so
+    # that SSH arguments like '--script=--help' are never misinterpreted.
+    if argv[:1] == ["--help"]:
         _print_help()
         sys.exit(0)
 
-    if "--version" in argv:
+    if argv[:1] == ["--version"]:
         from opkssh_wrapper import __version__
 
         sys.stdout.write(f"opkssh-wrapper {__version__}\n")
