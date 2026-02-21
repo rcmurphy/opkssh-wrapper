@@ -1,6 +1,15 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "babel>=2.0"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.hooks.custom]
+
+[tool.hatch.build.targets.wheel]
+# Include compiled .mo catalogues even though *.mo is listed in .gitignore.
+artifacts = ["src/opkssh_wrapper/locale/**/*.mo"]
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["src/opkssh_wrapper/locale/**/*.mo"]
 
 [project]
 name = "opkssh-wrapper"
@@ -44,6 +53,7 @@ test = [
 build = [
     "build>=1.0",
     "twine>=5.0",
+    "babel>=2.0",
 ]
 nuitka = [
     "nuitka>=2.0",
