@@ -235,7 +235,8 @@ def main(argv: list[str] | None = None) -> None:
             _stderr(
                 _(
                     "opkssh-wrapper: key expired, "
-                    "run 'opkssh-wrapper login' interactively"
+                    "run 'opkssh login' in an interactive terminal, "
+                    "then retry your ssh command"
                 ),
             )
             sys.exit(_EXIT_NO_KEY)
