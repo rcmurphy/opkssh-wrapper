@@ -19,7 +19,7 @@ if sys.version_info >= (3, 11):
     import tomllib
 else:
     try:
-        import tomli as tomllib  # type: ignore[import-not-found]
+        import tomli as tomllib
     except ImportError as exc:  # pragma: no cover
         msg = (
             "Python <3.11 requires the 'tomli' package. "
@@ -63,8 +63,7 @@ def _parse_toml(text: str) -> dict[str, Any]:
     that both mypy and pyright trust, regardless of whether the stdlib
     ``tomllib`` or the third-party ``tomli`` back-end is in use.
     """
-    result: dict[str, Any] = tomllib.loads(text)  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
-    return result
+    return tomllib.loads(text)
 
 
 def _validate_key_path(path: Path) -> Path:
