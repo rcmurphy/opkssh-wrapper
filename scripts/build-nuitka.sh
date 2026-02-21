@@ -18,5 +18,5 @@ LOCALE_SRC="${PROJECT_ROOT}/src/opkssh_wrapper/locale"
 python -m nuitka \
     --onefile \
     --output-filename=opkssh-wrapper \
-    --include-data-dir="${LOCALE_SRC}=opkssh_wrapper/locale" \
+    --include-data-dir="${PROJECT_ROOT}/src/opkssh_wrapper/locale=locale" \
     "${PROJECT_ROOT}/src/opkssh_wrapper/main.py"

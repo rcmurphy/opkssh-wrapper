@@ -40,7 +40,9 @@ class CustomBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         from babel.messages.mofile import write_mo  # type: ignore[import-untyped]
         from babel.messages.pofile import read_po  # type: ignore[import-untyped]
 
-        locale_root = pathlib.Path(self.root) / "src" / "opkssh_wrapper" / "locale"
+        locale_root = (
+            pathlib.Path(__file__).parent / "src" / "opkssh_wrapper" / "locale"
+        )
         po_files = sorted(locale_root.glob("*/LC_MESSAGES/*.po"))
         if not po_files:
             warnings.warn(
@@ -55,6 +57,3 @@ class CustomBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 catalog = read_po(f_in)
             with mo_file.open("wb") as f_out:
                 write_mo(f_out, catalog)
-            self.app.display_info(
-                f"Compiled {po_file.relative_to(self.root)} → {mo_file.name}"
-            )
