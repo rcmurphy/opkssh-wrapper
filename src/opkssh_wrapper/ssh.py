@@ -80,7 +80,9 @@ def find_real_ssh(ssh_path_override: str | None = None) -> str:
     if os.path.isfile(_FALLBACK_SSH) and os.access(_FALLBACK_SSH, os.X_OK):
         return _FALLBACK_SSH
 
-    msg = _("Could not find a real ssh binary in trusted directories or at {fallback}").format(
+    msg = _(
+        "Could not find a real ssh binary in trusted directories or at {fallback}"
+    ).format(
         fallback=_FALLBACK_SSH,
     )
     raise FileNotFoundError(msg)
