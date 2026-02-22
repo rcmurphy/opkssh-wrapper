@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from opkssh_wrapper.config import Config, ConfigError, _validate_key_path, load_config
+from opkssh_wrapper.config import (
+    Config,
+    ConfigError,
+    _validate_key_path,
+    _validate_positive_int,
+    load_config,
+)
 
 
 class TestConfigDefaults:
@@ -65,6 +71,54 @@ class TestConfigParsing:
         cfg_file.write_text("this is not [valid toml", encoding="utf-8")
         with pytest.raises(ConfigError, match="Failed to parse"):
             load_config(cfg_file)
+
+
+class TestValidatePositiveInt:
+    """_validate_positive_int rejects non-positive values."""
+
+    def test_positive_value_passes(self) -> None:
+        _validate_positive_int("key_ttl_hours", 1)  # should not raise
+
+    def test_zero_raises(self) -> None:
+        with pytest.raises(ConfigError, match="must be a positive integer"):
+            _validate_positive_int("key_ttl_hours", 0)
+
+    def test_negative_raises(self) -> None:
+        with pytest.raises(ConfigError, match="must be a positive integer"):
+            _validate_positive_int("login_timeout", -5)
+
+    def test_error_message_includes_name_and_value(self) -> None:
+        with pytest.raises(ConfigError, match="key_wait_timeout") as exc_info:
+            _validate_positive_int("key_wait_timeout", 0)
+        assert "0" in str(exc_info.value)
+
+
+class TestTimeoutValidationInLoadConfig:
+    """load_config rejects non-positive timeout values."""
+
+    @pytest.mark.parametrize("field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"])
+    def test_zero_value_raises(self, tmp_path: Path, field_name: str) -> None:
+        cfg_file = tmp_path / "config.toml"
+        cfg_file.write_text(f"{field_name} = 0\n", encoding="utf-8")
+        with pytest.raises(ConfigError, match="must be a positive integer"):
+            load_config(cfg_file)
+
+    @pytest.mark.parametrize("field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"])
+    def test_negative_value_raises(self, tmp_path: Path, field_name: str) -> None:
+        cfg_file = tmp_path / "config.toml"
+        cfg_file.write_text(f"{field_name} = -1\n", encoding="utf-8")
+        with pytest.raises(ConfigError, match="must be a positive integer"):
+            load_config(cfg_file)
+
+    @pytest.mark.parametrize(
+        "field_name,value",
+        [("key_ttl_hours", 1), ("key_wait_timeout", 1), ("login_timeout", 1)],
+    )
+    def test_positive_value_accepted(self, tmp_path: Path, field_name: str, value: int) -> None:
+        cfg_file = tmp_path / "config.toml"
+        cfg_file.write_text(f"{field_name} = {value}\n", encoding="utf-8")
+        cfg = load_config(cfg_file)
+        assert getattr(cfg, field_name) == value
 
 
 class TestKeyPathValidation:
