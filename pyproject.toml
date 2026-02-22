@@ -19,11 +19,16 @@ description = "A thin shim that transparently injects opkssh into SSH workflows"
 readme = "README.md"
 license = {file = "LICENSE.md"}
 requires-python = ">=3.10"
+authors = [
+    {name = "Rebecca C. Murphy", email = "rebecca@rcm.dev"},
+]
+keywords = ["ssh", "opkssh", "openid", "oidc", "authentication"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -35,6 +40,11 @@ classifiers = [
 dependencies = [
     "tomli>=1.0; python_version < '3.11'",
 ]
+
+[project.urls]
+Homepage = "https://github.com/rcmurphy/opkssh-wrapper"
+Repository = "https://github.com/rcmurphy/opkssh-wrapper"
+Issues = "https://github.com/rcmurphy/opkssh-wrapper/issues"
 
 [project.scripts]
 opkssh-wrapper = "opkssh_wrapper.main:main"
