@@ -1,0 +1,6 @@
+"""Minimal type stubs for tomli (used by pyright on Python <3.11)."""
+
+from typing import Any, BinaryIO
+
+def loads(__s: str) -> dict[str, Any]: ...
+def load(__fp: BinaryIO) -> dict[str, Any]: ...

@@ -1,0 +1,39 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      lint:
+        patterns:
+          - "ruff"
+          - "mypy"
+          - "pyright"
+          - "bandit"
+      test:
+        patterns:
+          - "pytest*"
+          - "hypothesis"
+      build:
+        patterns:
+          - "build"
+          - "twine"
+          - "nuitka"
+          - "ordered-set"
+          - "zstandard"
+          - "hatchling"
+      audit:
+        patterns:
+          - "pip-audit"
+          - "safety"
+          - "pip-licenses"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
