@@ -1,0 +1,175 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+      custom_version:
+        description: "Custom version (without v prefix, e.g. 2.0.0-rc1). Only used when bump is 'custom'."
+        required: false
+        type: string
+
+# Restrict the top-level token to read-only; individual jobs escalate as needed.
+permissions:
+  contents: read
+
+jobs:
+  # ── 1. Resolve the next version string ──────────────────────────────
+  resolve-version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # need full history for tag listing
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUMP="${{ inputs.bump }}"
+
+          if [[ "$BUMP" == "custom" ]]; then
+            V="${{ inputs.custom_version }}"
+            if [[ -z "$V" ]]; then
+              echo "::error::custom_version is required when bump is 'custom'"
+              exit 1
+            fi
+            # Strip leading v if the user accidentally included it
+            V="${V#v}"
+          else
+            # Find the latest vX.Y.Z tag (ignore pre-release / custom tags)
+            LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname \
+                     | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+                     | head -n1 || true)
+
+            if [[ -z "$LATEST" ]]; then
+              # No previous release — start at 0.1.0
+              LATEST="v0.0.0"
+            fi
+
+            # Strip the v prefix and split into components
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST#v}"
+
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH + 1)) ;;
+            esac
+
+            V="${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "version=${V}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${V}"    >> "$GITHUB_OUTPUT"
+          echo "### :rocket: Releasing **v${V}**" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── 2. Run the full CI suite before releasing ───────────────────────
+  ci:
+    name: CI
+    needs: [resolve-version]
+    uses: ./.github/workflows/ci.yml
+
+  # ── 3. Build release artifacts ──────────────────────────────────────
+  build:
+    name: Build release artifacts
+    needs: [resolve-version, ci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install ".[build]"
+
+      - name: Stamp version
+        shell: bash
+        run: |
+          set -euo pipefail
+          V="${{ needs.resolve-version.outputs.version }}"
+
+          # Update pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"${V}\"/" pyproject.toml
+
+          # Update __init__.py
+          sed -i "s/^__version__ = \".*\"/__version__ = \"${V}\"/" \
+            src/opkssh_wrapper/__init__.py
+
+          echo "Stamped version to ${V}"
+          grep '^version' pyproject.toml
+          grep '__version__' src/opkssh_wrapper/__init__.py
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Validate distributions
+        run: twine check dist/*
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+          retention-days: 90
+
+  # ── 4. Publish to PyPI via trusted publishing (OIDC) ────────────────
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [resolve-version, build]
+    runs-on: ubuntu-latest
+    environment: pypi                 # use a GitHub environment for deployment protection
+    permissions:
+      id-token: write                 # required for OIDC trusted publishing
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ── 5. Tag the commit and create a GitHub Release ───────────────────
+  github-release:
+    name: GitHub Release
+    needs: [resolve-version, build, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write                 # required for creating tags and releases
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+
+      - name: Create tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" dist/* \
+            --title "$TAG" \
+            --generate-notes
