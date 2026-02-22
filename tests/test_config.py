@@ -96,14 +96,18 @@ class TestValidatePositiveInt:
 class TestTimeoutValidationInLoadConfig:
     """load_config rejects non-positive timeout values."""
 
-    @pytest.mark.parametrize("field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"])
+    @pytest.mark.parametrize(
+        "field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"]
+    )
     def test_zero_value_raises(self, tmp_path: Path, field_name: str) -> None:
         cfg_file = tmp_path / "config.toml"
         cfg_file.write_text(f"{field_name} = 0\n", encoding="utf-8")
         with pytest.raises(ConfigError, match="must be a positive integer"):
             load_config(cfg_file)
 
-    @pytest.mark.parametrize("field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"])
+    @pytest.mark.parametrize(
+        "field_name", ["key_ttl_hours", "key_wait_timeout", "login_timeout"]
+    )
     def test_negative_value_raises(self, tmp_path: Path, field_name: str) -> None:
         cfg_file = tmp_path / "config.toml"
         cfg_file.write_text(f"{field_name} = -1\n", encoding="utf-8")
@@ -114,7 +118,9 @@ class TestTimeoutValidationInLoadConfig:
         "field_name,value",
         [("key_ttl_hours", 1), ("key_wait_timeout", 1), ("login_timeout", 1)],
     )
-    def test_positive_value_accepted(self, tmp_path: Path, field_name: str, value: int) -> None:
+    def test_positive_value_accepted(
+        self, tmp_path: Path, field_name: str, value: int
+    ) -> None:
         cfg_file = tmp_path / "config.toml"
         cfg_file.write_text(f"{field_name} = {value}\n", encoding="utf-8")
         cfg = load_config(cfg_file)
