@@ -19,6 +19,7 @@ from pathlib import Path
 from opkssh_wrapper.i18n import _
 
 _FALLBACK_SSH = "/usr/bin/ssh"
+_TRUSTED_SSH_DIRS: tuple[str, ...] = ("/usr/bin", "/bin", "/usr/local/bin")
 
 
 def _own_executables() -> set[str]:
@@ -63,9 +64,8 @@ def find_real_ssh(ssh_path_override: str | None = None) -> str:
         raise FileNotFoundError(msg)
 
     own = _own_executables()
-    path_dirs = os.environ.get("PATH", "").split(os.pathsep)
 
-    for directory in path_dirs:
+    for directory in _TRUSTED_SSH_DIRS:
         candidate_path = os.path.join(directory, "ssh")
         try:
             resolved = os.path.realpath(candidate_path)
