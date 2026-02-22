@@ -66,6 +66,23 @@ def _parse_toml(text: str) -> dict[str, Any]:
     return tomllib.loads(text)
 
 
+def _validate_positive_int(name: str, value: int) -> None:
+    """Raise :class:`ConfigError` unless *value* is a positive integer.
+
+    Args:
+        name:  Configuration key name, used in the error message.
+        value: The integer value to validate.
+
+    Raises:
+        ConfigError: If *value* is zero or negative.
+    """
+    if value <= 0:
+        msg = _(
+            "Configuration value {name} must be a positive integer, got {value}."
+        ).format(name=name, value=value)
+        raise ConfigError(msg)
+
+
 def _validate_key_path(path: Path) -> Path:
     """Resolve *path* and verify it sits inside an allowed directory.
 
@@ -125,10 +142,18 @@ def load_config(path: Path | None = None) -> Config:
 
     ssh_path_val: str | None = data.get("ssh_path")
 
+    key_ttl_hours = int(data.get("key_ttl_hours", 24))
+    key_wait_timeout = int(data.get("key_wait_timeout", 10))
+    login_timeout = int(data.get("login_timeout", 120))
+
+    _validate_positive_int("key_ttl_hours", key_ttl_hours)
+    _validate_positive_int("key_wait_timeout", key_wait_timeout)
+    _validate_positive_int("login_timeout", login_timeout)
+
     return Config(
-        key_ttl_hours=int(data.get("key_ttl_hours", 24)),
-        key_wait_timeout=int(data.get("key_wait_timeout", 10)),
-        login_timeout=int(data.get("login_timeout", 120)),
+        key_ttl_hours=key_ttl_hours,
+        key_wait_timeout=key_wait_timeout,
+        login_timeout=login_timeout,
         ssh_path=ssh_path_val,
         opkssh_path=str(data.get("opkssh_path", "opkssh")),
         key_path=key_path,
