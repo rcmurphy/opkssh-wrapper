@@ -163,7 +163,7 @@ jobs:
             src/opkssh_wrapper/__init__.py
           rm -f src/opkssh_wrapper/__init__.py.bak
 
-      - name: Install patchelf (Linux only)
+      - name: Install patchelf (Ubuntu only)
         if: runner.os == 'Linux'
         run: sudo apt-get install -y patchelf
 
