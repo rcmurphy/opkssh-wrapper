@@ -152,7 +152,7 @@ jobs:
         run: pip-audit .
 
       - name: safety check
-        run: safety check || true
+        run: safety check
 
       - name: License check
         run: pip-licenses --from=mixed --fail-on="GPL-3.0-or-later;AGPL-3.0-or-later"
