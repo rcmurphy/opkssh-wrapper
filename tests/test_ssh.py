@@ -35,8 +35,8 @@ class TestFindRealSsh:
         with pytest.raises(FileNotFoundError, match="not an executable"):
             find_real_ssh("/nonexistent/ssh")
 
-    def test_skips_self_on_path(self, tmp_path: Path) -> None:
-        """Shim is first on PATH but find_real_ssh skips it."""
+    def test_skips_self_on_trusted_dirs(self, tmp_path: Path) -> None:
+        """Shim appears first in _TRUSTED_SSH_DIRS but find_real_ssh skips it."""
         # Create a "shim" that resolves to our own executable.
         shim_dir = tmp_path / "shim_bin"
         shim_dir.mkdir()
@@ -52,8 +52,8 @@ class TestFindRealSsh:
         real_ssh.write_text("#!/bin/sh\n", encoding="utf-8")
         real_ssh.chmod(0o755)
 
-        test_path = f"{shim_dir}{os.pathsep}{real_dir}"
-        with mock.patch.dict(os.environ, {"PATH": test_path}):
+        trusted = (str(shim_dir), str(real_dir))
+        with mock.patch("opkssh_wrapper.ssh._TRUSTED_SSH_DIRS", trusted):
             result = find_real_ssh(None)
 
         assert result == str(real_ssh.resolve())
@@ -70,7 +70,7 @@ class TestFindRealSsh:
 
     def test_no_ssh_anywhere_raises(self, tmp_path: Path) -> None:
         with (
-            mock.patch.dict(os.environ, {"PATH": str(tmp_path)}),
+            mock.patch("opkssh_wrapper.ssh._TRUSTED_SSH_DIRS", ()),
             mock.patch(
                 "opkssh_wrapper.ssh._FALLBACK_SSH",
                 str(tmp_path / "nope"),
