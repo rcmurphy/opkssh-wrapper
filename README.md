@@ -1,5 +1,8 @@
 # opkssh-wrapper
 
+![PyPI - Version](https://img.shields.io/pypi/v/opkssh-wrapper)
+[![codecov](https://codecov.io/github/rcmurphy/opkssh-wrapper/graph/badge.svg?token=R4MROXM4R7)](https://codecov.io/github/rcmurphy/opkssh-wrapper)
+
 A thin shim that transparently wires [opkssh](https://github.com/openpubkey/opkssh)
 into your normal `ssh` workflow. Alias it as `ssh` and forget it's there — the
 wrapper silently ensures your ephemeral OpenPubKey identity is fresh before
