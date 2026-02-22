@@ -83,9 +83,9 @@ jobs:
     needs: [resolve-version]
     uses: ./.github/workflows/ci.yml
 
-  # ── 3. Build release artifacts ──────────────────────────────────────
-  build:
-    name: Build release artifacts
+  # ── 3. Build Python sdist + wheel ────────────────────────────────────
+  build-python:
+    name: Build Python package
     needs: [resolve-version, ci]
     runs-on: ubuntu-latest
     steps:
@@ -128,10 +128,67 @@ jobs:
           path: dist/
           retention-days: 90
 
-  # ── 4. Publish to PyPI via trusted publishing (OIDC) ────────────────
+  # ── 4. Build standalone binaries (Linux + macOS) ────────────────────
+  build-binary:
+    name: Build Binary (${{ matrix.os == 'ubuntu-latest' && 'linux' || 'macos' }})
+    needs: [resolve-version, ci]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package with Nuitka dependencies
+        run: pip install ".[nuitka]" babel
+
+      - name: Compile gettext catalogues
+        run: pybabel compile -d src/opkssh_wrapper/locale -D opkssh_wrapper
+
+      - name: Stamp version
+        shell: bash
+        run: |
+          set -euo pipefail
+          V="${{ needs.resolve-version.outputs.version }}"
+          sed -i.bak "s/^__version__ = \".*\"/__version__ = \"${V}\"/" \
+            src/opkssh_wrapper/__init__.py
+          rm -f src/opkssh_wrapper/__init__.py.bak
+
+      - name: Install patchelf (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y patchelf
+
+      - name: Build binary
+        run: bash scripts/build-nuitka.sh
+
+      - name: Smoke-test the binary
+        run: |
+          ./opkssh-wrapper --help || true
+          file ./opkssh-wrapper
+
+      - name: Rename binary with platform suffix
+        run: mv ./opkssh-wrapper ./opkssh-wrapper-${{ matrix.platform }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.platform }}
+          path: ./opkssh-wrapper-${{ matrix.platform }}
+          retention-days: 90
+
+  # ── 5. Publish to PyPI via trusted publishing (OIDC) ────────────────
   publish-pypi:
     name: Publish to PyPI
-    needs: [resolve-version, build]
+    needs: [resolve-version, build-python]
     runs-on: ubuntu-latest
     environment: pypi                 # use a GitHub environment for deployment protection
     permissions:
@@ -146,21 +203,33 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-  # ── 5. Tag the commit and create a GitHub Release ───────────────────
+  # ── 6. Tag the commit and create a GitHub Release ───────────────────
   github-release:
     name: GitHub Release
-    needs: [resolve-version, build, publish-pypi]
+    needs: [resolve-version, build-python, build-binary, publish-pypi]
     runs-on: ubuntu-latest
     permissions:
       contents: write                 # required for creating tags and releases
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download release artifacts
+      - name: Download Python artifacts
         uses: actions/download-artifact@v4
         with:
           name: release-dist
           path: dist/
+
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-linux
+          path: binaries/
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-macos
+          path: binaries/
 
       - name: Create tag and GitHub Release
         env:
@@ -170,6 +239,6 @@ jobs:
         run: |
           git tag "$TAG"
           git push origin "$TAG"
-          gh release create "$TAG" dist/* \
+          gh release create "$TAG" dist/* binaries/* \
             --title "$TAG" \
             --generate-notes
