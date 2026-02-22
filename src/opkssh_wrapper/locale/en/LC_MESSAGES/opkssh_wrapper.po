@@ -66,5 +66,5 @@ msgstr "Failed to parse config file {path}: {error}"
 msgid "Configured ssh_path {path} is not an executable file"
 msgstr "Configured ssh_path {path} is not an executable file"
 
-msgid "Could not find a real ssh binary on PATH or at {fallback}"
-msgstr "Could not find a real ssh binary on PATH or at {fallback}"
+msgid "Could not find a real ssh binary in trusted directories or at {fallback}"
+msgstr "Could not find a real ssh binary in trusted directories or at {fallback}"
