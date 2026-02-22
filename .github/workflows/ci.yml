@@ -8,6 +8,7 @@ on:
 
 jobs:
   lint:
+    name: Linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,7 @@ jobs:
         run: bandit -r src/ -c pyproject.toml
 
   test:
+    name: Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,8 +57,11 @@ jobs:
       - name: Run tests with coverage
         run: |
           python -m pytest tests/ -v --tb=short \
-            --cov=opkssh_wrapper --cov-report=xml:coverage.xml --cov-report=term-missing
-
+            --cov=opkssh_wrapper --cov-branch --cov-report=xml:coverage.xml --cov-report=term-missing
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -69,6 +74,7 @@ jobs:
         run: python -m coverage report --fail-under=90
 
   build-sdist-wheel:
+    name: Build Wheel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +100,7 @@ jobs:
           retention-days: 14
 
   build-nuitka:
+    name: Build Binary
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -137,6 +144,7 @@ jobs:
           retention-days: 14
 
   audit:
+    name: Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
